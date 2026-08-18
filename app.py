@@ -4,6 +4,13 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
+API_KEY = os.getenv("MYAPI_API_KEY")
+
+def auth():
+    if request.headers.get("X-API-Key") != API_KEY:
+        return jsonify({"error": "Forbidden"}), 403
+    return None
+
 # ============================================================
 # Базовые папки проекта
 # ============================================================
@@ -55,6 +62,9 @@ def home():
 
 @app.route("/upload", methods=["POST"])
 def upload():
+    e = auth()
+    if e: return e
+
     if "file" not in request.files:
         return jsonify({
             "status": "error",
@@ -87,6 +97,9 @@ def upload():
 
 @app.route("/files", methods=["GET"])
 def files():
+    e = auth()
+    if e: return e
+
     return jsonify({
         "uploads": os.listdir(UPLOAD_DIR),
         "output": os.listdir(OUTPUT_DIR),
@@ -101,6 +114,9 @@ def files():
 
 @app.route("/download/<folder>/<filename>", methods=["GET"])
 def download_from_folder(folder, filename):
+    e = auth()
+    if e: return e
+
     allowed_dirs = {
         "uploads": UPLOAD_DIR,
         "output": OUTPUT_DIR,
@@ -142,6 +158,9 @@ def download_from_folder(folder, filename):
 
 @app.route("/process/<filename>", methods=["POST", "GET"])
 def process_file(filename):
+    e = auth()
+    if e: return e
+
     safe_name = secure_filename(filename)
 
     src = os.path.join(UPLOAD_DIR, safe_name)
